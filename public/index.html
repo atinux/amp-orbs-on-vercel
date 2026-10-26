@@ -3,29 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="light dark">
 <title>Amp orbs on Vercel</title>
 <style>
-  html, body { height: 100%; margin: 0; overflow: hidden; background: #05030c; }
+  /* Colors follow the Vercel brand foundation (vercel.com/design.md):
+     surface = background-100, marks = gray-1000, focus = blue-700/900. */
+  :root {
+    color-scheme: light dark;
+    --surface: light-dark(oklch(1 0 0), oklch(0 0 0));
+    --mark: light-dark(oklch(0.205 0 0), oklch(0.946 0 0));
+    --focus: light-dark(oklch(57.61% 0.2508 258.23), oklch(71.7% 0.1648 250.794));
+  }
+  html, body { height: 100%; margin: 0; overflow: hidden; background: var(--surface); color: var(--mark); }
   canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   .logo {
     position: fixed;
     transform: translate(-50%, -50%);
-    pointer-events: none;
-    filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.25));
+    display: block;
+    padding: 8px;
+    color: inherit;
+    border-radius: 6px;
   }
+  .logo:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
   .logo svg { display: block; width: 100%; height: auto; }
 </style>
 </head>
 <body>
 <canvas id="c" aria-hidden="true"></canvas>
 
-<div class="logo" id="vercel" role="img" aria-label="Vercel">
-  <svg viewBox="0 0 76 65"><path d="M37.59.25l36.95 64H.64l36.95-64z" fill="#fff"/></svg>
-</div>
-<div class="logo" id="amp" role="img" aria-label="Amp">
-  <svg viewBox="0 -4 281 142"><path fill="#fff" d="M236.014 20C260.431 20.0001 280.602 37.4115 280.603 64.7432C280.602 93.5337 260.065 114.166 233.52 114.166C224.158 114.166 215.639 112.422 208.63 108.49C202.886 105.27 198.203 100.605 194.919 94.3379L188.115 141.822L187.946 143.016H174.214L174.448 141.423L191.772 22.4941H205.372L203.937 31.3369C212.143 23.8608 223.2 20.0002 236.014 20ZM47.082 20.1543C56.4435 20.1543 65.0012 21.8991 72.0488 25.8486C77.8222 29.0831 82.5323 33.7713 85.8271 40.085L88.1201 23.6924L88.2861 22.4932H101.863L89.1611 110.633L88.9873 111.826H75.4092L76.7227 102.855C68.5854 110.456 57.3981 114.323 44.5889 114.323C20.1709 114.323 0.000167223 96.9087 0 69.5771C0.000149745 40.7854 20.54 20.1549 47.082 20.1543ZM116.234 110.636L116.061 111.827H102.485L115.351 23.6855L115.521 22.4941H129.083L116.234 110.636ZM140.673 110.636L140.499 111.827H126.924L139.789 23.6855L139.96 22.4941H153.521L140.673 110.636ZM177.958 22.4941L165.108 110.636L164.935 111.827H151.36L164.225 23.6855L164.396 22.4941H177.958ZM48.4854 31.9844C27.8638 31.985 14.0133 48.3799 14.0127 68.9521C14.0127 77.7907 16.8094 86.1771 22.3145 92.334C27.7973 98.4657 36.0631 102.493 47.2402 102.493C67.8534 102.493 81.7122 85.9487 81.7129 65.3682C81.7129 55.4076 78.2493 47.0792 72.4131 41.2441C66.5794 35.4088 58.2871 31.9844 48.4854 31.9844ZM233.362 31.8291C212.749 31.8297 198.89 48.3716 198.89 68.9521C198.89 78.9123 202.356 87.2403 208.189 93.0742C214.023 98.9107 222.315 102.336 232.116 102.336C252.738 102.335 266.589 85.9407 266.59 65.3682C266.59 56.5296 263.795 48.1424 258.29 41.9863C252.807 35.8551 244.542 31.8291 233.362 31.8291Z"/></svg>
-</div>
+<a class="logo" id="vercel" href="https://vercel.com" aria-label="Vercel">
+  <svg viewBox="0 0 1155 1000" aria-hidden="true"><path d="M577.344 0L1154.69 1000H0L577.344 0Z" fill="currentColor"/></svg>
+</a>
+<a class="logo" id="amp" href="https://ampcode.com" aria-label="Amp">
+  <svg viewBox="0 -4 281 142" aria-hidden="true"><path fill="currentColor" d="M236.014 20C260.431 20.0001 280.602 37.4115 280.603 64.7432C280.602 93.5337 260.065 114.166 233.52 114.166C224.158 114.166 215.639 112.422 208.63 108.49C202.886 105.27 198.203 100.605 194.919 94.3379L188.115 141.822L187.946 143.016H174.214L174.448 141.423L191.772 22.4941H205.372L203.937 31.3369C212.143 23.8608 223.2 20.0002 236.014 20ZM47.082 20.1543C56.4435 20.1543 65.0012 21.8991 72.0488 25.8486C77.8222 29.0831 82.5323 33.7713 85.8271 40.085L88.1201 23.6924L88.2861 22.4932H101.863L89.1611 110.633L88.9873 111.826H75.4092L76.7227 102.855C68.5854 110.456 57.3981 114.323 44.5889 114.323C20.1709 114.323 0.000167223 96.9087 0 69.5771C0.000149745 40.7854 20.54 20.1549 47.082 20.1543ZM116.234 110.636L116.061 111.827H102.485L115.351 23.6855L115.521 22.4941H129.083L116.234 110.636ZM140.673 110.636L140.499 111.827H126.924L139.789 23.6855L139.96 22.4941H153.521L140.673 110.636ZM177.958 22.4941L165.108 110.636L164.935 111.827H151.36L164.225 23.6855L164.396 22.4941H177.958ZM48.4854 31.9844C27.8638 31.985 14.0133 48.3799 14.0127 68.9521C14.0127 77.7907 16.8094 86.1771 22.3145 92.334C27.7973 98.4657 36.0631 102.493 47.2402 102.493C67.8534 102.493 81.7122 85.9487 81.7129 65.3682C81.7129 55.4076 78.2493 47.0792 72.4131 41.2441C66.5794 35.4088 58.2871 31.9844 48.4854 31.9844ZM233.362 31.8291C212.749 31.8297 198.89 48.3716 198.89 68.9521C198.89 78.9123 202.356 87.2403 208.189 93.0742C214.023 98.9107 222.315 102.336 232.116 102.336C252.738 102.335 266.589 85.9407 266.59 65.3682C266.59 56.5296 263.795 48.1424 258.29 41.9863C252.807 35.8551 244.542 31.8291 233.362 31.8291Z"/></svg>
+</a>
 
 <script>
 (() => {
@@ -33,19 +44,26 @@
   const MAX_SCALE = 1.85;
   // Center of each loop of the lemniscate, in curve units.
   const LOOP_CENTER_X = 0.62;
+  // Vercel gray-1000 and background-100 in sRGB, per theme.
+  const THEMES = {
+    dark: { surface: [0, 0, 0], mark: [0.929, 0.929, 0.929] },
+    light: { surface: [1, 1, 1], mark: [0.09, 0.09, 0.09] },
+  };
 
   const canvas = document.getElementById('c');
   const vercel = document.getElementById('vercel');
   const amp = document.getElementById('amp');
-  const gl = canvas.getContext('webgl', { antialias: false, premultipliedAlpha: false });
+  // Opaque canvas: blending only changes color, never transparency.
+  const gl = canvas.getContext('webgl', { alpha: false, antialias: false });
+  const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   // Shape scale: 1.85, reduced on narrow screens so the loop stays visible.
   const scaleFor = (aspect) => Math.min(MAX_SCALE, 0.8 * aspect);
 
   function placeLogos() {
-    const w = window.innerWidth, h = window.innerHeight, aspect = w / h;
-    const k = scaleFor(aspect);
-    const unit = k * h / 2; // pixels per curve unit
+    const w = window.innerWidth, h = window.innerHeight;
+    const unit = scaleFor(w / h) * h / 2; // pixels per curve unit
     const offset = LOOP_CENTER_X * unit;
     vercel.style.left = `${w / 2 - offset}px`;
     amp.style.left = `${w / 2 + offset}px`;
@@ -63,8 +81,6 @@
     uniform float uAspect;
     uniform float uScale;
     uniform float uHeight;
-    uniform vec2 uMouse;
-    uniform float uMouseStrength;
     varying float vAlpha;
 
     const float TAU = 6.28318530718;
@@ -86,26 +102,22 @@
 
       // Scale in height units, so the aspect ratio stays correct.
       vec2 q = p * uScale;
-
-      // Gently push particles away from the cursor, with a Gaussian falloff.
-      vec2 toParticle = q - uMouse;
-      float dist2 = dot(toParticle, toParticle);
-      float push = uMouseStrength * 0.18 * exp(-dist2 / (2.0 * 0.12 * 0.12));
-      q += normalize(toParticle + 1e-5) * push;
-
       gl_Position = vec4(q.x / uAspect, q.y, 0.0, 1.0);
       gl_PointSize = (1.2 + 2.0 * (1.0 - n)) * uHeight / 900.0;
       vAlpha = 0.18 * (1.0 - n * 0.5);
     }
   `;
 
+  // Dark theme adds the mark color (overlaps glow); light theme subtracts
+  // toward it (overlaps darken), so density reads the same way in both.
   const fragmentSource = `
     precision mediump float;
+    uniform vec3 uInk;
     varying float vAlpha;
     void main() {
       float r = length(gl_PointCoord - 0.5);
       float alpha = smoothstep(0.5, 0.0, r) * vAlpha;
-      gl_FragColor = vec4(vec3(alpha), 1.0);
+      gl_FragColor = vec4(uInk * alpha, 1.0);
     }
   `;
 
@@ -133,11 +145,21 @@
 
   const uniform = (name) => gl.getUniformLocation(program, name);
   const uTime = uniform('uTime'), uAspect = uniform('uAspect'), uScale = uniform('uScale');
-  const uHeight = uniform('uHeight'), uMouse = uniform('uMouse'), uMouseStrength = uniform('uMouseStrength');
-
+  const uHeight = uniform('uHeight'), uInk = uniform('uInk');
   gl.enable(gl.BLEND);
-  gl.blendFunc(gl.ONE, gl.ONE);
-  gl.clearColor(5 / 255, 3 / 255, 12 / 255, 1);
+
+  function applyTheme() {
+    const theme = darkQuery.matches ? THEMES.dark : THEMES.light;
+    gl.clearColor(...theme.surface, 1);
+    if (darkQuery.matches) {
+      gl.blendFunc(gl.ONE, gl.ONE);
+      gl.uniform3fv(uInk, theme.mark);
+    } else {
+      // dst = dst * (1 - src): each particle darkens toward the mark color.
+      gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_COLOR);
+      gl.uniform3fv(uInk, theme.mark.map((c) => 1 - c));
+    }
+  }
 
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -145,37 +167,35 @@
     canvas.height = Math.round(window.innerHeight * dpr);
     gl.viewport(0, 0, canvas.width, canvas.height);
   }
-  resize();
-  window.addEventListener('resize', resize);
 
-  // Mouse position in the shader's height units; strength eases in and out.
-  const mouse = { x: 0, y: 0, active: false, strength: 0 };
-  window.addEventListener('pointermove', (event) => {
-    const aspect = window.innerWidth / window.innerHeight;
-    mouse.x = (event.clientX / window.innerWidth * 2 - 1) * aspect;
-    mouse.y = -(event.clientY / window.innerHeight * 2 - 1);
-    mouse.active = true;
-  });
-  document.documentElement.addEventListener('pointerleave', () => { mouse.active = false; });
-  window.addEventListener('blur', () => { mouse.active = false; });
-
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const start = performance.now();
-
-  function frame(now) {
+  function draw(now) {
     const aspect = canvas.width / canvas.height;
-    mouse.strength += ((mouse.active ? 1 : 0) - mouse.strength) * 0.08;
-    gl.uniform1f(uTime, (now - start) / 1000 * (reducedMotion ? 0.2 : 1));
+    gl.uniform1f(uTime, reducedMotion.matches ? 0 : (now - start) / 1000);
     gl.uniform1f(uAspect, aspect);
     gl.uniform1f(uScale, scaleFor(aspect));
     gl.uniform1f(uHeight, canvas.height);
-    gl.uniform2f(uMouse, mouse.x, mouse.y);
-    gl.uniform1f(uMouseStrength, mouse.strength);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.POINTS, 0, COUNT);
-    requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+
+  // Animate with requestAnimationFrame; with reduced motion, draw one still frame.
+  let frameId = 0;
+  function loop(now) {
+    draw(now);
+    frameId = requestAnimationFrame(loop);
+  }
+  function restart() {
+    cancelAnimationFrame(frameId);
+    applyTheme();
+    resize();
+    if (reducedMotion.matches) draw(start);
+    else frameId = requestAnimationFrame(loop);
+  }
+  window.addEventListener('resize', restart);
+  darkQuery.addEventListener('change', restart);
+  reducedMotion.addEventListener('change', restart);
+  restart();
 })();
 </script>
 </body>
