@@ -11,7 +11,7 @@ Read `README.md` first. This file lists constraints and lessons that aren't obvi
 ## Rules
 
 - Never commit secrets. `.env*` and `.vercel` are gitignored. Don't print token values.
-- Keep the setup token-free on Vercel: `dispatch.mjs` passes no credentials unless `VERCEL_TOKEN` is set, so the SDK uses the daemon's OIDC token.
+- `dispatch.mjs` authenticates only with OIDC. Don't add Vercel access token support: SDK calls pass no credentials, and the VCR lookup uses `getVercelOidcToken()`.
 - Every dispatch operation must be safe to repeat and finish within five minutes.
 - Run `npm run check` in `provider/` after changing `dispatch.mjs`.
 
@@ -21,7 +21,7 @@ Read `README.md` first. This file lists constraints and lessons that aren't obvi
 - Daemon images are tagged with the deployment ID only. There's no `latest` tag, so the bare reference `daemon.orb-image` returns `404 Image not found`. `dispatch.mjs` lists the repository's images and pins the newest ready one by digest.
 - Vercel doesn't pass system variables such as `VERCEL_DEPLOYMENT_ID` to daemon builds as build arguments, and daemon OIDC tokens have no deployment claim.
 - The VCR images endpoint (`GET /v1/vcr/repository/{name}/images`) accepts the project's OIDC token. The team and project IDs come from its `owner_id` and `project_id` claims.
-- `Sandbox.getOrCreate()` ignores new settings for an existing sandbox. Call `sandbox.update()` to change them.
+- `Sandbox.getOrCreate()` ignores new settings for an existing sandbox. If you change the snapshot policy or resources, existing orbs need `sandbox.update()`.
 - Stopping a sandbox saves a snapshot, and `sandbox.delete()` doesn't delete snapshots. Delete them explicitly after tests.
 - The Amp CLI needs a glibc base image, such as Debian. It doesn't run on Alpine.
 - Daemon logs aren't available through `vercel logs`. Check them in the dashboard, or write results somewhere you can read, such as sandbox tags.

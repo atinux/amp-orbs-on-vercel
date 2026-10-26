@@ -90,11 +90,23 @@ To stop all charges:
    vercel sandbox snapshots list
    ```
 
-## Run the provider outside Vercel
+## Test the dispatch program locally
 
-To run the provider on your own machine, set `VERCEL_TOKEN`, `VERCEL_TEAM_ID`, and `VERCEL_PROJECT_ID` with a Vercel [access token](https://vercel.com/docs/accounts/access-tokens). Then run `amp orb provider "$PWD/provider/dispatch.mjs"`. Deploy the project once first, so `daemon.orb-image` exists. This setup stores a long-lived Vercel token, so we recommend the daemon.
+`dispatch.mjs` authenticates only with OIDC. To run it on your computer, pull the project's development OIDC token, which expires after 12 hours:
+
+```sh
+vercel env pull
+cd provider
+npm install
+export ORB_ID=amp-dispatch-test-$(date +%s) ORB_TOKEN=fake
+for op in spawn spawn pause delete delete; do ORB_OPERATION=$op node --env-file=../.env.local dispatch.mjs; done
+```
+
+Deploy the project once first, so `daemon.orb-image` exists. The fake `ORB_TOKEN` can't connect to Amp, but the run checks sandbox creation, resume, pause, and cleanup.
 
 ## Troubleshoot
+
+- **`Could not get credentials from OIDC context`:** The dispatch program has no OIDC token. It runs on the daemon, or locally after `vercel env pull`.
 
 - **`No ready image in daemon.orb-image`:** Deploy the project to production to build the image.
 - **The thread waits at "Creating orb":** Check the `amp-orb-provider` daemon logs in the Vercel dashboard. Make sure no other provider uses the same token.

@@ -2,54 +2,32 @@
 // dispatch.mjs - Amp self-hosted orbs on Vercel Sandbox.
 // `amp orb provider` runs this once per job (spawn, pause, delete).
 // Contract: https://ampcode.com/docs/orbs/self-hosted#dispatch-contract
+//
+// Authentication is OIDC only: on a Vercel Daemon, the Sandbox SDK and
+// getVercelOidcToken() read the daemon's short-lived token. No Vercel access
+// token is used.
 import { APIError, Sandbox, Snapshot } from '@vercel/sandbox'
 import { getVercelOidcToken } from '@vercel/oidc'
 
 const { ORB_OPERATION, ORB_ID, ORB_TOKEN, AMP_URL } = process.env
 
 // The orb-image daemon (zero instances) makes every deployment build Amp's orb
-// image and push it to this VCR repository. Set VERCEL_ORB_IMAGE to use another
-// image reference instead.
+// image and push it to this VCR repository.
 const ORB_IMAGE_REPOSITORY = 'daemon.orb-image'
 
-// On a Vercel Daemon, pass no credentials: the SDK reads the daemon's OIDC
-// token. Outside Vercel, set VERCEL_TOKEN, VERCEL_TEAM_ID, and VERCEL_PROJECT_ID.
-const credentials = process.env.VERCEL_TOKEN
-	? {
-			token: process.env.VERCEL_TOKEN,
-			teamId: process.env.VERCEL_TEAM_ID,
-			projectId: process.env.VERCEL_PROJECT_ID,
-		}
-	: {}
-
-// A paused orb keeps its disk as a snapshot. Expire it 30 days after the last
-// pause so unused threads don't accumulate storage costs. After expiry, the
-// next spawn starts a fresh orb and Amp runs repository setup again.
+// A paused orb keeps its disk as a snapshot, which expires 30 days after the
+// last pause. After that, the next spawn starts a fresh orb.
 const SNAPSHOT_EXPIRATION_MS = 30 * 24 * 60 * 60 * 1000
-const snapshotPolicy = {
-	snapshotExpiration: SNAPSHOT_EXPIRATION_MS,
-	keepLastSnapshots: {
-		count: 1, expiration: SNAPSHOT_EXPIRATION_MS, deleteEvicted: true,
-	},
-}
-
-// Vercel API credentials: the access token if set, otherwise the OIDC token,
-// whose claims carry the team and project IDs.
-async function apiAuth() {
-	if (credentials.token) return credentials
-	const token = await getVercelOidcToken()
-	const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString())
-	return { token, teamId: claims.owner_id, projectId: claims.project_id }
-}
 
 // Daemon images are tagged with the deployment ID, not `latest`, so pin the
-// newest ready image by digest.
+// newest ready image by digest. The OIDC token's claims carry the team and
+// project IDs.
 async function resolveOrbImage() {
-	if (process.env.VERCEL_ORB_IMAGE) return process.env.VERCEL_ORB_IMAGE
-	const { token, teamId, projectId } = await apiAuth()
+	const token = await getVercelOidcToken()
+	const claims = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString())
 	const url = new URL(`https://api.vercel.com/v1/vcr/repository/${ORB_IMAGE_REPOSITORY}/images`)
-	url.searchParams.set('teamId', teamId)
-	url.searchParams.set('projectId', projectId)
+	url.searchParams.set('teamId', claims.owner_id)
+	url.searchParams.set('projectId', claims.project_id)
 	const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
 	if (!response.ok) {
 		throw new Error(`Listing ${ORB_IMAGE_REPOSITORY} images failed: ${response.status} ${await response.text()}`)
@@ -62,33 +40,29 @@ async function resolveOrbImage() {
 	return `${ORB_IMAGE_REPOSITORY}@${newest.manifestDigest}`
 }
 
-async function orbExists() {
+// Returns the orb's sandbox without resuming it, or null if it doesn't exist.
+async function findOrb() {
 	try {
-		await Sandbox.get({ ...credentials, name: ORB_ID, resume: false })
-		return true
+		return await Sandbox.get({ name: ORB_ID, resume: false })
 	} catch (error) {
-		if (error instanceof APIError && error.response.status === 404) return false
+		if (error instanceof APIError && error.response.status === 404) return null
 		throw error
 	}
 }
 
 if (ORB_OPERATION === 'spawn') {
 	// Resolve the image only for new orbs; existing orbs resume from their disk.
-	const image = (await orbExists()) ? undefined : await resolveOrbImage()
+	const image = (await findOrb()) ? undefined : await resolveOrbImage()
 	if (image) console.log(`Creating ${ORB_ID} from ${image}`)
 	const sandbox = await Sandbox.getOrCreate({
-		...credentials,
 		name: ORB_ID,
 		...(image ? { image } : {}),
 		resources: { vcpus: 4 },
 		timeout: 60 * 60 * 1000,
 		persistent: true,
-		...snapshotPolicy,
+		snapshotExpiration: SNAPSHOT_EXPIRATION_MS,
+		keepLastSnapshots: { count: 1, expiration: SNAPSHOT_EXPIRATION_MS, deleteEvicted: true },
 	})
-	// getOrCreate() ignores new settings for an existing sandbox.
-	if (sandbox.snapshotExpiration !== SNAPSHOT_EXPIRATION_MS) {
-		await sandbox.update(snapshotPolicy)
-	}
 	const setup = await sandbox.runCommand({
 		cmd: '/bin/bash',
 		args: ['-c', 'hostname localhost && mkdir -p /vercel/sandbox'],
@@ -107,26 +81,18 @@ if (ORB_OPERATION === 'spawn') {
 		sudo: true,
 		detached: true,
 	})
-} else if (ORB_OPERATION === 'pause' || ORB_OPERATION === 'delete') {
-	try {
-		const sandbox = await Sandbox.get({
-			...credentials, name: ORB_ID, resume: false,
-		})
-		if (ORB_OPERATION === 'delete') {
-			if (sandbox.status === 'running') await sandbox.stop()
-			for await (const saved of await sandbox.listSnapshots()) {
-				if (saved.status !== 'created') continue
-				const snapshot = await Snapshot.get({
-					...credentials, snapshotId: saved.id,
-				})
-				await snapshot.delete()
-			}
-			await sandbox.delete()
-		} else if (sandbox.status === 'running') await sandbox.stop()
-	} catch (error) {
-		if (!(error instanceof APIError && error.response.status === 404)) {
-			throw error
+} else if (ORB_OPERATION === 'pause') {
+	const sandbox = await findOrb()
+	if (sandbox?.status === 'running') await sandbox.stop()
+} else if (ORB_OPERATION === 'delete') {
+	const sandbox = await findOrb()
+	if (sandbox) {
+		if (sandbox.status === 'running') await sandbox.stop()
+		// sandbox.delete() keeps snapshots, so delete them first.
+		for await (const saved of await sandbox.listSnapshots()) {
+			if (saved.status === 'created') await (await Snapshot.get({ snapshotId: saved.id })).delete()
 		}
+		await sandbox.delete()
 	}
 } else {
 	console.error(`Unknown ORB_OPERATION: ${ORB_OPERATION}`)
