@@ -6,74 +6,177 @@
 <meta name="color-scheme" content="dark">
 <title>Amp orbs on Vercel</title>
 <style>
-  html, body { height: 100%; margin: 0; }
-  body {
-    display: grid;
-    place-items: center;
-    background: radial-gradient(ellipse at center, #0b0b0b 0%, #000 70%);
+  html, body { height: 100%; margin: 0; overflow: hidden; background: #05030c; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .logo {
+    position: fixed;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.25));
   }
-  svg { width: min(72vw, 640px); height: auto; overflow: visible; }
-  .loop { fill: none; stroke: url(#loop-gradient); stroke-width: 1.25; opacity: 0.35; }
-  .light {
-    fill: none;
-    stroke: url(#loop-gradient);
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-dasharray: 0.12 0.88;
-    filter: url(#glow);
-    animation: travel 6s linear infinite;
-  }
-  .rim { transform-origin: 285px 100px; animation: breathe 4s ease-in-out infinite; }
-  @keyframes travel { to { stroke-dashoffset: -1; } }
-  @keyframes breathe { 50% { opacity: 0.7; } }
-  @media (prefers-reduced-motion: reduce) {
-    .light, .rim { animation: none; }
-  }
+  .logo svg { display: block; width: 100%; height: auto; }
 </style>
 </head>
 <body>
-<svg viewBox="0 0 400 200" role="img" aria-label="Vercel and Amp orb joined by an infinity loop">
-  <defs>
-    <linearGradient id="loop-gradient" gradientUnits="userSpaceOnUse" x1="60" y1="0" x2="340" y2="0">
-      <stop offset="0" stop-color="#ffffff"/>
-      <stop offset="0.5" stop-color="#d9d4c7"/>
-      <stop offset="1" stop-color="#ff9a4a"/>
-    </linearGradient>
-    <radialGradient id="orb-body" cx="0.42" cy="0.38" r="0.65">
-      <stop offset="0" stop-color="#14231a"/>
-      <stop offset="0.7" stop-color="#050807"/>
-      <stop offset="1" stop-color="#000"/>
-    </radialGradient>
-    <radialGradient id="orb-rim" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0.78" stop-color="#ff9a4a" stop-opacity="0"/>
-      <stop offset="0.9" stop-color="#ffb066" stop-opacity="0.9"/>
-      <stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/>
-    </radialGradient>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="2.5" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="halo" x="-100%" y="-100%" width="300%" height="300%">
-      <feGaussianBlur stdDeviation="5"/>
-    </filter>
-  </defs>
+<canvas id="c" aria-hidden="true"></canvas>
 
-  <!-- Infinity loop: left loop centered at (115, 100), right loop at (285, 100). -->
-  <path id="infinity" class="loop" pathLength="1"
-    d="M200 100 C 240 40, 345 40, 345 100 C 345 160, 240 160, 200 100 C 160 40, 55 40, 55 100 C 55 160, 160 160, 200 100 Z"/>
-  <path class="light" pathLength="1"
-    d="M200 100 C 240 40, 345 40, 345 100 C 345 160, 240 160, 200 100 C 160 40, 55 40, 55 100 C 55 160, 160 160, 200 100 Z"/>
+<div class="logo" id="vercel" role="img" aria-label="Vercel">
+  <svg viewBox="0 0 76 65"><path d="M37.59.25l36.95 64H.64l36.95-64z" fill="#fff"/></svg>
+</div>
+<div class="logo" id="amp" role="img" aria-label="Amp">
+  <svg viewBox="0 -4 281 142"><path fill="#fff" d="M236.014 20C260.431 20.0001 280.602 37.4115 280.603 64.7432C280.602 93.5337 260.065 114.166 233.52 114.166C224.158 114.166 215.639 112.422 208.63 108.49C202.886 105.27 198.203 100.605 194.919 94.3379L188.115 141.822L187.946 143.016H174.214L174.448 141.423L191.772 22.4941H205.372L203.937 31.3369C212.143 23.8608 223.2 20.0002 236.014 20ZM47.082 20.1543C56.4435 20.1543 65.0012 21.8991 72.0488 25.8486C77.8222 29.0831 82.5323 33.7713 85.8271 40.085L88.1201 23.6924L88.2861 22.4932H101.863L89.1611 110.633L88.9873 111.826H75.4092L76.7227 102.855C68.5854 110.456 57.3981 114.323 44.5889 114.323C20.1709 114.323 0.000167223 96.9087 0 69.5771C0.000149745 40.7854 20.54 20.1549 47.082 20.1543ZM116.234 110.636L116.061 111.827H102.485L115.351 23.6855L115.521 22.4941H129.083L116.234 110.636ZM140.673 110.636L140.499 111.827H126.924L139.789 23.6855L139.96 22.4941H153.521L140.673 110.636ZM177.958 22.4941L165.108 110.636L164.935 111.827H151.36L164.225 23.6855L164.396 22.4941H177.958ZM48.4854 31.9844C27.8638 31.985 14.0133 48.3799 14.0127 68.9521C14.0127 77.7907 16.8094 86.1771 22.3145 92.334C27.7973 98.4657 36.0631 102.493 47.2402 102.493C67.8534 102.493 81.7122 85.9487 81.7129 65.3682C81.7129 55.4076 78.2493 47.0792 72.4131 41.2441C66.5794 35.4088 58.2871 31.9844 48.4854 31.9844ZM233.362 31.8291C212.749 31.8297 198.89 48.3716 198.89 68.9521C198.89 78.9123 202.356 87.2403 208.189 93.0742C214.023 98.9107 222.315 102.336 232.116 102.336C252.738 102.335 266.589 85.9407 266.59 65.3682C266.59 56.5296 263.795 48.1424 258.29 41.9863C252.807 35.8551 244.542 31.8291 233.362 31.8291Z"/></svg>
+</div>
 
-  <!-- Vercel logo -->
-  <polygon points="115,81 137,119 93,119" fill="#fff"/>
+<script>
+(() => {
+  const COUNT = 40000;
+  const MAX_SCALE = 1.85;
+  // Center of each loop of the lemniscate, in curve units.
+  const LOOP_CENTER_X = 0.62;
 
-  <!-- Amp orb: a dark sphere with a backlit orange rim and a green glint. -->
-  <g>
-    <circle class="rim" cx="285" cy="100" r="25" fill="#ff8a33" opacity="0.45" filter="url(#halo)"/>
-    <circle cx="285" cy="100" r="21" fill="url(#orb-body)"/>
-    <circle class="rim" cx="285" cy="100" r="23" fill="url(#orb-rim)"/>
-    <ellipse cx="277" cy="90" rx="6" ry="3.2" fill="#7fe07a" opacity="0.55" transform="rotate(-30 277 90)" filter="url(#glow)"/>
-  </g>
-</svg>
+  const canvas = document.getElementById('c');
+  const vercel = document.getElementById('vercel');
+  const amp = document.getElementById('amp');
+  const gl = canvas.getContext('webgl', { antialias: false, premultipliedAlpha: false });
+
+  // Shape scale: 1.85, reduced on narrow screens so the loop stays visible.
+  const scaleFor = (aspect) => Math.min(MAX_SCALE, 0.8 * aspect);
+
+  function placeLogos() {
+    const w = window.innerWidth, h = window.innerHeight, aspect = w / h;
+    const k = scaleFor(aspect);
+    const unit = k * h / 2; // pixels per curve unit
+    const offset = LOOP_CENTER_X * unit;
+    vercel.style.left = `${w / 2 - offset}px`;
+    amp.style.left = `${w / 2 + offset}px`;
+    vercel.style.top = amp.style.top = `${h / 2}px`;
+    vercel.style.width = `${0.2 * unit}px`;
+    amp.style.width = `${0.4 * unit}px`;
+  }
+  placeLogos();
+  window.addEventListener('resize', placeLogos);
+  if (!gl) return;
+
+  const vertexSource = `
+    attribute vec2 aSeed;
+    uniform float uTime;
+    uniform float uAspect;
+    uniform float uScale;
+    uniform float uHeight;
+    uniform vec2 uMouse;
+    uniform float uMouseStrength;
+    varying float vAlpha;
+
+    const float TAU = 6.28318530718;
+    float hash(float x) { return fract(sin(x * 12.9898) * 43758.5453); }
+
+    void main() {
+      float a = aSeed.x, b = aSeed.y;
+      float n = hash(b);
+
+      // Flow around the lemniscate of Bernoulli at slightly different speeds.
+      float s = fract(a + uTime * (0.03 + b * 0.04)) * TAU;
+      float sn = sin(s), cs = cos(s);
+      float d = 1.0 + sn * sn;
+      vec2 p = vec2(cs / d, sn * cs / d);
+
+      // Push away from the curve by a random offset that slowly rotates.
+      float angle = hash(a + 1.7) * TAU + uTime * (0.15 + 0.1 * hash(a + 3.1));
+      p += vec2(cos(angle), sin(angle)) * pow(n, 1.2) * 0.3;
+
+      // Scale in height units, so the aspect ratio stays correct.
+      vec2 q = p * uScale;
+
+      // Gently push particles away from the cursor, with a Gaussian falloff.
+      vec2 toParticle = q - uMouse;
+      float dist2 = dot(toParticle, toParticle);
+      float push = uMouseStrength * 0.18 * exp(-dist2 / (2.0 * 0.12 * 0.12));
+      q += normalize(toParticle + 1e-5) * push;
+
+      gl_Position = vec4(q.x / uAspect, q.y, 0.0, 1.0);
+      gl_PointSize = (1.2 + 2.0 * (1.0 - n)) * uHeight / 900.0;
+      vAlpha = 0.18 * (1.0 - n * 0.5);
+    }
+  `;
+
+  const fragmentSource = `
+    precision mediump float;
+    varying float vAlpha;
+    void main() {
+      float r = length(gl_PointCoord - 0.5);
+      float alpha = smoothstep(0.5, 0.0, r) * vAlpha;
+      gl_FragColor = vec4(vec3(alpha), 1.0);
+    }
+  `;
+
+  function compile(type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(shader));
+    return shader;
+  }
+  const program = gl.createProgram();
+  gl.attachShader(program, compile(gl.VERTEX_SHADER, vertexSource));
+  gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragmentSource));
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
+  gl.useProgram(program);
+
+  const seeds = new Float32Array(COUNT * 2);
+  for (let i = 0; i < seeds.length; i++) seeds[i] = Math.random();
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, seeds, gl.STATIC_DRAW);
+  const seedLocation = gl.getAttribLocation(program, 'aSeed');
+  gl.enableVertexAttribArray(seedLocation);
+  gl.vertexAttribPointer(seedLocation, 2, gl.FLOAT, false, 0, 0);
+
+  const uniform = (name) => gl.getUniformLocation(program, name);
+  const uTime = uniform('uTime'), uAspect = uniform('uAspect'), uScale = uniform('uScale');
+  const uHeight = uniform('uHeight'), uMouse = uniform('uMouse'), uMouseStrength = uniform('uMouseStrength');
+
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.ONE, gl.ONE);
+  gl.clearColor(5 / 255, 3 / 255, 12 / 255, 1);
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(window.innerWidth * dpr);
+    canvas.height = Math.round(window.innerHeight * dpr);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Mouse position in the shader's height units; strength eases in and out.
+  const mouse = { x: 0, y: 0, active: false, strength: 0 };
+  window.addEventListener('pointermove', (event) => {
+    const aspect = window.innerWidth / window.innerHeight;
+    mouse.x = (event.clientX / window.innerWidth * 2 - 1) * aspect;
+    mouse.y = -(event.clientY / window.innerHeight * 2 - 1);
+    mouse.active = true;
+  });
+  document.documentElement.addEventListener('pointerleave', () => { mouse.active = false; });
+  window.addEventListener('blur', () => { mouse.active = false; });
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const start = performance.now();
+
+  function frame(now) {
+    const aspect = canvas.width / canvas.height;
+    mouse.strength += ((mouse.active ? 1 : 0) - mouse.strength) * 0.08;
+    gl.uniform1f(uTime, (now - start) / 1000 * (reducedMotion ? 0.2 : 1));
+    gl.uniform1f(uAspect, aspect);
+    gl.uniform1f(uScale, scaleFor(aspect));
+    gl.uniform1f(uHeight, canvas.height);
+    gl.uniform2f(uMouse, mouse.x, mouse.y);
+    gl.uniform1f(uMouseStrength, mouse.strength);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.POINTS, 0, COUNT);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
 </body>
 </html>
