@@ -1,0 +1,14 @@
+{
+  "name": "amp-orb-provider",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Dispatch program for Amp self-hosted orbs on Vercel Sandbox",
+  "scripts": {
+    "check": "node --check dispatch.mjs"
+  },
+  "dependencies": {
+    "@vercel/oidc": "^4.0.3",
+    "@vercel/sandbox": "^3.9.0"
+  }
+}

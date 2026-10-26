@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "outputDirectory": "public",
+  "daemons": {
+    "amp-orb-provider": {
+      "root": "provider/",
+      "entrypoint": "Dockerfile",
+      "instances": { "iad1": 1 },
+      "resources": { "requests": { "memory": "1Gi" } }
+    },
+    "orb-image": {
+      "root": "orb-image/",
+      "entrypoint": "Dockerfile",
+      "instances": { "iad1": 0 }
+    }
+  }
+}
