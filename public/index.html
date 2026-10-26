@@ -1,3 +1,79 @@
 <!doctype html>
-<title>Amp orb provider</title>
-<p>This project runs an Amp orb provider as a Vercel Daemon. See the repository README.</p>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Amp orbs on Vercel</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: grid;
+    place-items: center;
+    background: radial-gradient(ellipse at center, #0b0b0b 0%, #000 70%);
+  }
+  svg { width: min(72vw, 640px); height: auto; overflow: visible; }
+  .loop { fill: none; stroke: url(#loop-gradient); stroke-width: 1.25; opacity: 0.35; }
+  .light {
+    fill: none;
+    stroke: url(#loop-gradient);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-dasharray: 0.12 0.88;
+    filter: url(#glow);
+    animation: travel 6s linear infinite;
+  }
+  .rim { transform-origin: 285px 100px; animation: breathe 4s ease-in-out infinite; }
+  @keyframes travel { to { stroke-dashoffset: -1; } }
+  @keyframes breathe { 50% { opacity: 0.7; } }
+  @media (prefers-reduced-motion: reduce) {
+    .light, .rim { animation: none; }
+  }
+</style>
+</head>
+<body>
+<svg viewBox="0 0 400 200" role="img" aria-label="Vercel and Amp orb joined by an infinity loop">
+  <defs>
+    <linearGradient id="loop-gradient" gradientUnits="userSpaceOnUse" x1="60" y1="0" x2="340" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.5" stop-color="#d9d4c7"/>
+      <stop offset="1" stop-color="#ff9a4a"/>
+    </linearGradient>
+    <radialGradient id="orb-body" cx="0.42" cy="0.38" r="0.65">
+      <stop offset="0" stop-color="#14231a"/>
+      <stop offset="0.7" stop-color="#050807"/>
+      <stop offset="1" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="orb-rim" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0.78" stop-color="#ff9a4a" stop-opacity="0"/>
+      <stop offset="0.9" stop-color="#ffb066" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="halo" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="5"/>
+    </filter>
+  </defs>
+
+  <!-- Infinity loop: left loop centered at (115, 100), right loop at (285, 100). -->
+  <path id="infinity" class="loop" pathLength="1"
+    d="M200 100 C 240 40, 345 40, 345 100 C 345 160, 240 160, 200 100 C 160 40, 55 40, 55 100 C 55 160, 160 160, 200 100 Z"/>
+  <path class="light" pathLength="1"
+    d="M200 100 C 240 40, 345 40, 345 100 C 345 160, 240 160, 200 100 C 160 40, 55 40, 55 100 C 55 160, 160 160, 200 100 Z"/>
+
+  <!-- Vercel logo -->
+  <polygon points="115,81 137,119 93,119" fill="#fff"/>
+
+  <!-- Amp orb: a dark sphere with a backlit orange rim and a green glint. -->
+  <g>
+    <circle class="rim" cx="285" cy="100" r="25" fill="#ff8a33" opacity="0.45" filter="url(#halo)"/>
+    <circle cx="285" cy="100" r="21" fill="url(#orb-body)"/>
+    <circle class="rim" cx="285" cy="100" r="23" fill="url(#orb-rim)"/>
+    <ellipse cx="277" cy="90" rx="6" ry="3.2" fill="#7fe07a" opacity="0.55" transform="rotate(-30 277 90)" filter="url(#glow)"/>
+  </g>
+</svg>
+</body>
+</html>
