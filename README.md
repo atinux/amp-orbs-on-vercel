@@ -10,6 +10,19 @@ Run [Amp self-hosted orbs](https://ampcode.com/docs/orbs/self-hosted) on [Vercel
 > [!NOTE]
 > Vercel Daemons are in Public Beta.
 
+## Quick start
+
+You need an Amp workspace where you can add an orb provider, and a Vercel account with Sandbox access.
+
+1. In your Amp workspace, open **Settings** > **Orbs**, click **Add Orb Provider**, and copy the `aop_live_…` token. Amp shows it only once.
+2. Click **Deploy** and paste the token when Vercel asks for `AMP_ORB_PROVIDER_TOKEN`:
+
+   [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fatinux%2Famp-orbs-on-vercel&project-name=amp-orbs-on-vercel&repository-name=amp-orbs-on-vercel&env=AMP_ORB_PROVIDER_TOKEN&envDescription=The%20aop_live_%20token%20of%20a%20custom%20orb%20provider.%20Create%20one%20in%20your%20Amp%20workspace%20settings%20under%20Orbs.&envLink=https%3A%2F%2Fampcode.com%2Fworkspace%23custom-orb-providers)
+
+3. When the deployment is ready, start a thread in Amp, click **Orb**, and choose your provider under **Self-Hosted**.
+
+The first deployment takes a few minutes, because it copies Amp's orb image. Run one provider per Amp provider token.
+
 ## How it works
 
 The following diagram shows how a thread gets an orb:
@@ -37,9 +50,9 @@ For each job, `dispatch.mjs` does the following:
 
 Orbs use 4 vCPUs and 8 GB of memory, and stop after one hour at most. A paused orb's snapshot expires 30 days after its last pause.
 
-## Set up
+## Deploy with the CLI
 
-You need an Amp workspace where you can add an orb provider, a Vercel account with Sandbox access, and the [Vercel CLI](https://vercel.com/docs/cli).
+To deploy from your own clone instead of the Deploy button, use the [Vercel CLI](https://vercel.com/docs/cli). This also lets you store the token as a sensitive environment variable.
 
 1. Clone this repository and link it to a new Vercel project:
 
@@ -62,8 +75,6 @@ You need an Amp workspace where you can add an orb provider, a Vercel account wi
    ```
 
 6. In Amp, start a thread, click **Orb**, and choose your provider under **Self-Hosted**.
-
-Run one provider per Amp provider token.
 
 ## Credentials
 
