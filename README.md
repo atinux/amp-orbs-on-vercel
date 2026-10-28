@@ -106,6 +106,13 @@ To stop all charges:
    vercel sandbox snapshots list
    ```
 
+3. Delete both daemon image repositories, which keep billing for VCR storage. The next deployment builds them again:
+
+   ```sh
+   vercel vcr rm daemon.orb-image
+   vercel vcr rm daemon.amp-orb-provider
+   ```
+
 ## Test the dispatch program locally
 
 `dispatch.mjs` authenticates only with OIDC. To run it on your computer, pull the project's development OIDC token, which expires after 12 hours:

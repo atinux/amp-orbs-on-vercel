@@ -15,8 +15,8 @@ const { ORB_OPERATION, ORB_ID, ORB_TOKEN, AMP_URL } = process.env
 // image and push it to this VCR repository.
 const ORB_IMAGE_REPOSITORY = 'daemon.orb-image'
 
-// A paused orb keeps its disk as a snapshot, which expires 30 days after the
-// last pause. After that, the next spawn starts a fresh orb.
+// A paused orb keeps its disk as a snapshot, which expires 30 days after it was
+// last used. After that, the next spawn starts a fresh orb.
 const SNAPSHOT_EXPIRATION_MS = 30 * 24 * 60 * 60 * 1000
 
 // Daemon images are tagged with the deployment ID, not `latest`, so pin the
@@ -50,9 +50,27 @@ async function findOrb() {
 	}
 }
 
+// Returns the orb's sandbox if it can resume. A stopped orb whose snapshot
+// expired can't resume (410 snapshot_not_found), so delete it and let spawn
+// create a fresh orb.
+async function findResumableOrb() {
+	const sandbox = await findOrb()
+	if (!sandbox || sandbox.status !== 'stopped') return sandbox
+	if (sandbox.currentSnapshotId) {
+		try {
+			const snapshot = await Snapshot.get({ snapshotId: sandbox.currentSnapshotId })
+			if (snapshot.status === 'created') return sandbox
+		} catch (error) {
+			if (!(error instanceof APIError && error.response.status === 404)) throw error
+		}
+	}
+	await sandbox.delete()
+	return null
+}
+
 if (ORB_OPERATION === 'spawn') {
 	// Resolve the image only for new orbs; existing orbs resume from their disk.
-	const image = (await findOrb()) ? undefined : await resolveOrbImage()
+	const image = (await findResumableOrb()) ? undefined : await resolveOrbImage()
 	if (image) console.log(`Creating ${ORB_ID} from ${image}`)
 	const sandbox = await Sandbox.getOrCreate({
 		name: ORB_ID,

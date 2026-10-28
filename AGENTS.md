@@ -23,6 +23,7 @@ Read `README.md` first. This file lists constraints and lessons that aren't obvi
 - The VCR images endpoint (`GET /v1/vcr/repository/{name}/images`) accepts the project's OIDC token. The team and project IDs come from its `owner_id` and `project_id` claims.
 - `Sandbox.getOrCreate()` ignores new settings for an existing sandbox. If you change the snapshot policy or resources, existing orbs need `sandbox.update()`.
 - Stopping a sandbox saves a snapshot, and `sandbox.delete()` doesn't delete snapshots. Delete them explicitly after tests.
+- A stopped persistent sandbox whose snapshot expired can't resume: SDK calls fail with `410 snapshot_not_found`, and Vercel removes it only after 14 days. `spawn` checks the current snapshot and recreates the orb when it's gone.
 - The Amp CLI needs a glibc base image, such as Debian. It doesn't run on Alpine.
 - Daemon logs aren't available through `vercel logs`. Check them in the dashboard, or write results somewhere you can read, such as sandbox tags.
 
