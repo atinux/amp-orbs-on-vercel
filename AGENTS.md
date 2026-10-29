@@ -13,6 +13,8 @@ Read `README.md` first. This file lists constraints and lessons that aren't obvi
 - Never commit secrets. `.env*` and `.vercel` are gitignored. Don't print token values.
 - `dispatch.mjs` authenticates only with OIDC. Don't add Vercel access token support: SDK calls pass no credentials, and the VCR lookup uses `getVercelOidcToken()`.
 - Every dispatch operation must be safe to repeat and finish within five minutes.
+- The provider image only runs code pinned in `provider/package-lock.json`, because it can obtain the project's OIDC tokens. Never add `curl | bash` installers or unpinned downloads. Keep `@ampcode/cli` and the SDKs at exact versions, and keep `npm ci --ignore-scripts` followed by Amp's explicit setup and `amp --version` check.
+- Upgrade dependencies with `npm install --save-exact`, review the lockfile's `integrity` changes, run `npm audit --omit=dev`, and commit `package.json` and `package-lock.json` together. Never regenerate integrity hashes to bypass a mismatch.
 - Run `npm run check` in `provider/` after changing `dispatch.mjs`.
 
 ## Lessons learned
@@ -26,6 +28,8 @@ Read `README.md` first. This file lists constraints and lessons that aren't obvi
 - A stopped persistent sandbox whose snapshot expired can't resume: SDK calls fail with `410 snapshot_not_found`, and Vercel removes it only after 14 days. `spawn` checks the current snapshot and recreates the orb when it's gone.
 - The Amp CLI needs a glibc base image, such as Debian. It doesn't run on Alpine.
 - Daemon logs aren't available through `vercel logs`. Check them in the dashboard, or write results somewhere you can read, such as sandbox tags.
+
+- On Apple silicon, `docker build --platform linux/amd64` crashes at `amp --version` (`qemu: uncaught target signal 6`), because Amp's Bun binary doesn't run under QEMU. Test the provider image with `--platform linux/arm64`; Vercel builds daemons on real amd64 machines.
 
 ## Verification
 

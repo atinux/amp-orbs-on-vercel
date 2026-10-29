@@ -83,6 +83,15 @@ To deploy from your own clone instead of the Deploy button, use the [Vercel CLI]
 | Vercel OIDC token | Short-lived. Vercel refreshes it for the daemon. | Nowhere. The SDK reads it from the daemon's token file for each job. |
 | Amp provider token | Long-lived, until you delete the provider in Amp | A sensitive environment variable |
 
+## Pinned dependencies
+
+The provider daemon can obtain the project's OIDC tokens, so its image only runs code pinned in `provider/package-lock.json`:
+
+- The Amp CLI comes from npm (`@ampcode/cli`) at an exact version, not from a remote install script. Its platform binaries are optional dependencies with integrity hashes in the lockfile.
+- The Sandbox and OIDC SDKs are pinned to exact versions. An npm override pins `zod` to a release that fixes [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5).
+- The Docker build runs `npm ci --ignore-scripts`, so no package script runs until npm has verified every package. Amp's setup script then places the binary, and `amp --version` fails the build if the binary is missing.
+- `AMP_SKIP_UPDATE_CHECK=1` stops the CLI from updating itself at runtime.
+
 ## Update Amp's orb image
 
 Each production deployment rebuilds `daemon.orb-image` from Amp's latest image. New orbs use the newest build; existing orbs keep the image they started from. To pick up a new Amp image, redeploy:
@@ -90,6 +99,18 @@ Each production deployment rebuilds `daemon.orb-image` from Amp's latest image. 
 ```sh
 vercel --prod
 ```
+
+## Update the Amp CLI and SDKs
+
+The provider keeps the pinned versions until you change them. To upgrade, review the new release, then update the exact pin and the lockfile together:
+
+```sh
+cd provider
+npm install --save-exact @ampcode/cli@<approved-version>
+npm audit --omit=dev
+```
+
+Review the version and `integrity` changes in `package-lock.json`, commit `package.json` and `package-lock.json` together, and redeploy. Never regenerate the lockfile during the Docker build, and never replace an integrity hash to get past a mismatch; investigate it instead.
 
 ## Costs
 
@@ -120,7 +141,7 @@ To stop all charges:
 ```sh
 vercel env pull
 cd provider
-npm install
+npm ci --ignore-scripts
 export ORB_ID=amp-dispatch-test-$(date +%s) ORB_TOKEN=fake
 for op in spawn spawn pause delete delete; do ORB_OPERATION=$op node --env-file=../.env.local dispatch.mjs; done
 ```
