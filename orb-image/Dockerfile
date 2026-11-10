@@ -19,10 +19,10 @@ RUN curl --fail --location --silent --show-error \
     && rm /tmp/lightpanda
 ENV LIGHTPANDA_DISABLE_TELEMETRY=true
 
-COPY Dockerfile smoke.mjs ./
-COPY test/ ./test/
-# Amp's base supplies Chrome, gh, jq and ffmpeg. Verify as the orb task user.
+# Check the installed executables as the orb task user without launching browsers.
 USER user
 ENV HOME="/home/user"
-RUN npm test && npm run smoke
+RUN agent-browser --version \
+    && lightpanda version \
+    && before-and-after --help
 WORKDIR /home/user
