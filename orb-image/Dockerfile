@@ -20,9 +20,14 @@ RUN curl --fail --location --silent --show-error \
 ENV LIGHTPANDA_DISABLE_TELEMETRY=true
 ENV AGENT_BROWSER_ENGINE=lightpanda
 
-# Check the installed executables as the orb task user without launching browsers.
+COPY profile.sh /etc/profile.d/orb-tools.sh
+
+# Orb bootstrap uses a login shell, which can reset the image's PATH.
 USER user
 ENV HOME="/home/user"
-RUN agent-browser --version \
-    && lightpanda version
+RUN bash -lc 'test "$(command -v agent-browser)" = /opt/orb-tools/node_modules/.bin/agent-browser \
+    && test "$AGENT_BROWSER_ENGINE" = lightpanda \
+    && test "$LIGHTPANDA_DISABLE_TELEMETRY" = true \
+    && agent-browser --version \
+    && lightpanda version'
 WORKDIR /home/user

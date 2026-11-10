@@ -124,7 +124,9 @@ npm ci --ignore-scripts
 npm audit --omit=dev
 ```
 
-During image builds, the task user runs `agent-browser --version` and `lightpanda version` to check that the installed executables start. These checks do not launch browsers or prove browser functionality; full browser validation can be run separately in CI or manually.
+A login profile restores the tool path and browser defaults when orb startup runs `bash -lc`, without replacing explicit engine or telemetry settings. Image builds check tool resolution, defaults, and both executable versions through that task-user login shell.
+
+The Orb image CI workflow runs `node --test orb-image/test/profile.test.mjs`, builds the image on Linux, and checks the provider's `setpriv` → clean environment → `bash -lc` startup path. These checks do not launch browsers or prove browser functionality; full browser validation can be run separately.
 
 Update exact npm pins and the lockfile together with `npm install --save-exact --ignore-scripts`; review integrity changes and the audit before redeploying.
 

@@ -1,0 +1,46 @@
+name: Orb image
+
+on:
+  pull_request:
+    paths:
+      - orb-image/**
+      - .github/workflows/orb-image.yml
+  push:
+    branches: [main]
+    paths:
+      - orb-image/**
+      - .github/workflows/orb-image.yml
+
+permissions:
+  contents: read
+
+jobs:
+  login-shell:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Test the login profile
+        run: node --test orb-image/test/profile.test.mjs
+      - name: Build the Linux image
+        run: docker build --tag orb-browser-tools:ci orb-image
+      - name: Check a clean task-user login shell
+        run: |
+          docker run --rm --user root --entrypoint /usr/bin/setpriv orb-browser-tools:ci \
+            --reuid=user --regid=user --init-groups -- \
+            /usr/bin/env -i HOME=/home/user USER=user \
+            PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+            /bin/bash -lc '
+              set -eu
+              test "$(id -un)" = user
+              test "$(command -v agent-browser)" = /opt/orb-tools/node_modules/.bin/agent-browser
+              test "$AGENT_BROWSER_ENGINE" = lightpanda
+              test "$LIGHTPANDA_DISABLE_TELEMETRY" = true
+              expected=$(node -p "require(\"/opt/orb-tools/package.json\").dependencies[\"agent-browser\"]")
+              actual=$(agent-browser --version)
+              printf "%s\n" "$actual"
+              test "$actual" = "agent-browser $expected"
+              lightpanda version
+            '
