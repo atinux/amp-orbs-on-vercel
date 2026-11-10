@@ -92,6 +92,34 @@ The provider daemon can obtain the project's OIDC tokens, so its image only runs
 - The Docker build runs `npm ci --ignore-scripts`, so no package script runs until npm has verified every package. Amp's setup script then places the binary, and `amp --version` fails the build if the binary is missing.
 - `AMP_SKIP_UPDATE_CHECK=1` stops the CLI from updating itself at runtime.
 
+## Orb tools
+
+The orb image adds pinned `agent-browser@0.41.2`, `@vercel/before-and-after@0.0.4`, and [Lightpanda 1.0.3](https://github.com/lightpanda-io/browser/releases/tag/1.0.3) to Amp's base image. Chrome, `gh` (2.99.0+ with native `--attach`), `jq`, and `ffmpeg` come from the base and are checked during the build. No custom skills, personal instructions, plugins, or configuration are included. The provider image is unchanged.
+
+Chrome remains the default browser. Use it for visual screenshots and CSS/layout checks. Lightpanda is opt-in for lightweight DOM interaction:
+
+```sh
+agent-browser --session research --engine lightpanda open http://localhost:3000
+agent-browser --session research --engine lightpanda snapshot
+agent-browser --session research --engine lightpanda close
+```
+
+Lightpanda 1.0.3 supports text-only PNG/PDF output, not full visual rendering. Its telemetry is disabled. The image downloads the stable Linux amd64 release and verifies its SHA-256 before installation; it does not use nightly builds or remote install scripts.
+
+The `before-and-after` CLI is deprecated upstream and retained only for compatibility with simple captures. Prefer `agent-browser` for new browser work. Its URL-mode `--markdown` option can upload to a public service: do not use that option unless public upload is explicitly authorized. Installing these tools grants no credentials or permission to publish.
+
+To check or update the tool package:
+
+```sh
+cd orb-image
+npm ci --ignore-scripts
+npm test
+npm audit --omit=dev
+npm run smoke
+```
+
+The smoke test needs Chrome, Lightpanda 1.0.3, `gh`, `jq`, and `ffmpeg` on `PATH`. It runs only local HTTP fixtures, verifies Chrome screenshots and legacy before/after capture, and checks Lightpanda title, snapshot, click, and text retrieval. It uses isolated browser sessions and removes its temporary files; it never uploads evidence. Docker runs both tests as `user` during the image build. Update exact npm pins and the lockfile together with `npm install --save-exact --ignore-scripts`; review integrity changes and the audit before redeploying.
+
 ## Update Amp's orb image
 
 Each production deployment rebuilds `daemon.orb-image` from Amp's latest image. New orbs use the newest build; existing orbs keep the image they started from. To pick up a new Amp image, redeploy:
