@@ -18,11 +18,11 @@ RUN curl --fail --location --silent --show-error \
     && install -m 0755 /tmp/lightpanda /usr/local/bin/lightpanda \
     && rm /tmp/lightpanda
 ENV LIGHTPANDA_DISABLE_TELEMETRY=true
+ENV AGENT_BROWSER_ENGINE=lightpanda
 
 # Check the installed executables as the orb task user without launching browsers.
 USER user
 ENV HOME="/home/user"
 RUN agent-browser --version \
-    && lightpanda version \
-    && before-and-after --help
+    && lightpanda version
 WORKDIR /home/user

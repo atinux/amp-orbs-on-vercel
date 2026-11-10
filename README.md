@@ -94,19 +94,27 @@ The provider daemon can obtain the project's OIDC tokens, so its image only runs
 
 ## Orb tools
 
-The orb image adds pinned `agent-browser@0.41.2`, `@vercel/before-and-after@0.0.4`, and [Lightpanda 1.0.3](https://github.com/lightpanda-io/browser/releases/tag/1.0.3) to Amp's base image. Chrome, `gh`, `jq`, and `ffmpeg` come from the base. No custom skills, personal instructions, plugins, or configuration are included. The provider image is unchanged.
+The orb image adds pinned `agent-browser@0.41.2` and [Lightpanda 1.0.3](https://github.com/lightpanda-io/browser/releases/tag/1.0.3) to Amp's base image. Chrome, `gh`, `jq`, and `ffmpeg` come from the base. No custom skills, personal instructions, plugins, or configuration are included. The provider image is unchanged.
 
-Chrome remains the default browser. Use it for visual screenshots and CSS/layout checks. Lightpanda is opt-in for lightweight DOM interaction:
+Lightpanda is the default engine (`AGENT_BROWSER_ENGINE=lightpanda`) for supported browsing, research, and DOM interaction:
 
 ```sh
-agent-browser --session research --engine lightpanda open http://localhost:3000
-agent-browser --session research --engine lightpanda snapshot
-agent-browser --session research --engine lightpanda close
+agent-browser --session research open http://localhost:3000
+agent-browser --session research snapshot
+agent-browser --session research close
 ```
 
-Lightpanda 1.0.3 supports text-only PNG/PDF output, not full visual rendering. Its telemetry is disabled. The image downloads the stable Linux amd64 release and verifies its SHA-256 before installation; it does not use nightly builds or remote install scripts.
+Use Chrome only when the task needs full-fidelity CSS/layout or canvas rendering, visual screenshots, video, persistent profiles, extensions, or encounters a real Lightpanda compatibility failure. Start directly with Chrome when the requirement is known to be unsupported by Lightpanda; an unsuccessful attempt adds no useful evidence. Use a fresh, named session with an explicit override:
 
-The `before-and-after` CLI is deprecated upstream and retained only for compatibility with simple captures. Prefer `agent-browser` for new browser work. Its URL-mode `--markdown` option can upload to a public service: do not use that option unless public upload is explicitly authorized. Installing these tools grants no credentials or permission to publish.
+```sh
+agent-browser --session visual-review --engine chrome open http://localhost:3000
+agent-browser --session visual-review --engine chrome screenshot /tmp/visual-review.png
+agent-browser --session visual-review --engine chrome close
+```
+
+Lightpanda 1.0.3 produces text-only PNG/PDF output, not full visual rendering: its PNGs are not UI proof. Its telemetry is disabled. The image downloads the stable Linux amd64 release and verifies its SHA-256 before installation; it does not use nightly builds or remote install scripts.
+
+For before/after PR evidence, capture screenshots and recordings with `agent-browser` using Chrome, then use GitHub CLI 2.99+ and its native `--attach` support for approved uploads. The optional official public [before-and-after agent skill](https://github.com/vercel-labs/before-and-after) formats existing media and manages a marked block in the PR description. Install it separately if wanted; this starter does not bundle skills or personal workflows. Installing tools or skills grants no credentials or permission to publish.
 
 To install and audit the tool package locally:
 
@@ -116,7 +124,7 @@ npm ci --ignore-scripts
 npm audit --omit=dev
 ```
 
-During image builds, the task user runs `agent-browser --version`, `lightpanda version`, and `before-and-after --help` to check that the installed executables start. These checks do not launch browsers or prove browser functionality; full browser validation can be run separately in CI or manually.
+During image builds, the task user runs `agent-browser --version` and `lightpanda version` to check that the installed executables start. These checks do not launch browsers or prove browser functionality; full browser validation can be run separately in CI or manually.
 
 Update exact npm pins and the lockfile together with `npm install --save-exact --ignore-scripts`; review integrity changes and the audit before redeploying.
 

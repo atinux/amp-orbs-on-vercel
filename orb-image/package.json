@@ -5,7 +5,6 @@
   "type": "module",
   "description": "Pinned browser and capture tools for Amp orbs",
   "dependencies": {
-    "@vercel/before-and-after": "0.0.4",
     "agent-browser": "0.41.2"
   }
 }
