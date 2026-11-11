@@ -49,4 +49,9 @@ jobs:
               test "$actual" = "agent-browser $expected"
               lightpanda version
               node /tmp/browser-smoke.mjs
+              export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              test "$(command -v agent-browser)" = /usr/local/bin/agent-browser
+              printf "BUNDLED_BROWSER "
+              agent-browser --version
+              node /tmp/browser-smoke.mjs
             '

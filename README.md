@@ -132,11 +132,11 @@ Review the version and `integrity` changes in `package-lock.json`, commit `packa
 
 ## Dependency updates
 
-Enable the Renovate GitHub App for this repository. `renovate.json` follows the [Nuxt shared preset](https://github.com/nuxt/renovate-config-nuxt), with exact pins, weekly update PRs, a three-day release delay, and automerge disabled. Amp CLI updates allow its timestamped prerelease versions while retaining the release-age delay and npm's `latest` ceiling. Amp's `amp-orb:latest` base is intentionally excluded from pinning and updates.
+Enable the Renovate GitHub App for this repository. `renovate.json` uses explicit built-in presets for recommended settings, weekly updates, and weekly lockfile maintenance, with exact pins, a three-day release delay, and automerge disabled. Amp CLI updates allow its timestamped prerelease versions while retaining the release-age delay and npm's `latest` ceiling. Amp's `amp-orb:latest` base is intentionally excluded from pinning and updates.
 
-Provider changes run dependency installation with lifecycle scripts disabled, a syntax check, an audit, a Linux image build, and a credential-free SDK import check in CI. Renovate config changes are validated separately, including Lightpanda extraction when installed. Review lockfile integrity changes before merging, then redeploy; existing orbs keep their snapshots.
+Provider changes run dependency installation with lifecycle scripts disabled, a syntax check, an audit, a Linux image build, and a credential-free SDK import check in CI. Renovate config changes are validated separately, including mandatory Lightpanda extraction. Review lockfile integrity changes before merging, then redeploy; existing orbs keep their snapshots.
 
-When the optional Lightpanda installation is present in `orb-image/Dockerfile`, its custom manager tracks the release version and SHA-256 together. Keep the checksum-verifying image build and browser smoke checks passing before merging an update. Renovate computes the proposed digest from the release assets; it does not independently authenticate the publisher, and a failed asset match can leave a stale checksum that must not be bypassed.
+The custom manager for `orb-image/Dockerfile` tracks Lightpanda's release version and SHA-256 together. Keep the checksum-verifying image build and browser smoke checks passing before merging an update. Renovate computes the proposed digest from the release assets; it does not independently authenticate the publisher, and a failed asset match can leave a stale checksum that must not be bypassed.
 
 ## Costs
 
