@@ -1,0 +1,48 @@
+name: Provider
+
+on:
+  pull_request:
+    paths:
+      - provider/**
+      - renovate.json
+      - .github/workflows/provider.yml
+  push:
+    branches: [main]
+    paths:
+      - provider/**
+      - renovate.json
+      - .github/workflows/provider.yml
+
+permissions:
+  contents: read
+
+jobs:
+  provider:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Install integrity-checked dependencies without lifecycle scripts
+        working-directory: provider
+        run: npm ci --omit=dev --include=optional --ignore-scripts
+      - name: Check dispatch syntax
+        working-directory: provider
+        run: npm run check
+      - name: Audit provider dependencies
+        working-directory: provider
+        run: npm audit --omit=dev
+      - name: Build the Linux provider image
+        run: docker build --tag amp-orb-provider:ci provider
+      - name: Check SDK imports without project credentials
+        run: |
+          docker run --rm --entrypoint node amp-orb-provider:ci --input-type=module -e '
+            import assert from "node:assert/strict";
+            import { APIError, Sandbox, Snapshot } from "@vercel/sandbox";
+            import { getVercelOidcToken } from "@vercel/oidc";
+            for (const method of [APIError, Sandbox.get, Sandbox.getOrCreate, Snapshot.get, getVercelOidcToken]) {
+              assert.equal(typeof method, "function");
+            }
+            console.log("PASS: provider SDK imports and required static methods");
+          '
