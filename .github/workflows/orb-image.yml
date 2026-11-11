@@ -24,11 +24,16 @@ jobs:
           persist-credentials: false
       - name: Test the login profile
         run: node --test orb-image/test/profile.test.mjs
+      - name: Audit browser dependencies
+        working-directory: orb-image
+        run: npm audit --omit=dev
       - name: Build the Linux image
         run: docker build --tag orb-browser-tools:ci orb-image
-      - name: Check a clean task-user login shell
+      - name: Check task-user startup and both browsers
         run: |
-          docker run --rm --user root --entrypoint /usr/bin/setpriv orb-browser-tools:ci \
+          docker run --rm --shm-size=1g --user root \
+            --mount "type=bind,src=$PWD/orb-image/test/browser-smoke.mjs,dst=/tmp/browser-smoke.mjs,readonly" \
+            --entrypoint /usr/bin/setpriv orb-browser-tools:ci \
             --reuid=user --regid=user --init-groups -- \
             /usr/bin/env -i HOME=/home/user USER=user \
             PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
@@ -36,11 +41,12 @@ jobs:
               set -eu
               test "$(id -un)" = user
               test "$(command -v agent-browser)" = /opt/orb-tools/node_modules/.bin/agent-browser
-              test "$AGENT_BROWSER_ENGINE" = lightpanda
+              test "$AGENT_BROWSER_ENGINE" = chrome
               test "$LIGHTPANDA_DISABLE_TELEMETRY" = true
               expected=$(node -p "require(\"/opt/orb-tools/package.json\").dependencies[\"agent-browser\"]")
               actual=$(agent-browser --version)
               printf "%s\n" "$actual"
               test "$actual" = "agent-browser $expected"
               lightpanda version
+              node /tmp/browser-smoke.mjs
             '

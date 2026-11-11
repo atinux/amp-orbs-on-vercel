@@ -94,41 +94,21 @@ The provider daemon can obtain the project's OIDC tokens, so its image only runs
 
 ## Orb tools
 
-The orb image adds pinned `agent-browser@0.41.2` and [Lightpanda 1.0.3](https://github.com/lightpanda-io/browser/releases/tag/1.0.3) to Amp's base image. Chrome, `gh`, `jq`, and `ffmpeg` come from the base. No custom skills, personal instructions, plugins, or configuration are included. The provider image is unchanged.
+The Linux amd64 orb image adds pinned `agent-browser@0.41.2` and checksum-verified [Lightpanda 1.0.3](https://github.com/lightpanda-io/browser/releases/tag/1.0.3) to Amp's base image. The newer browser CLI is installed separately under `/opt/orb-tools`; the base copy is not modified. No personal skills, instructions, or plugins are bundled, and the provider image is unchanged.
 
-Lightpanda is the default engine (`AGENT_BROWSER_ENGINE=lightpanda`) for supported browsing, research, and DOM interaction:
-
-```sh
-agent-browser --session research open http://localhost:3000
-agent-browser --session research snapshot
-agent-browser --session research close
-```
-
-Use Chrome only when the task needs full-fidelity CSS/layout or canvas rendering, visual screenshots, video, persistent profiles, extensions, or encounters a real Lightpanda compatibility failure. Start directly with Chrome when the requirement is known to be unsupported by Lightpanda; an unsuccessful attempt adds no useful evidence. Use a fresh, named session with an explicit override:
+Chrome remains the default. Lightpanda is opt-in for nonvisual DOM work:
 
 ```sh
-agent-browser --session visual-review --engine chrome open http://localhost:3000
-agent-browser --session visual-review --engine chrome screenshot /tmp/visual-review.png
-agent-browser --session visual-review --engine chrome close
+agent-browser --engine lightpanda --session research open http://localhost:3000
+agent-browser --engine lightpanda --session research snapshot
+agent-browser --engine lightpanda --session research close
 ```
 
-Lightpanda 1.0.3 produces text-only PNG/PDF output, not full visual rendering: its PNGs are not UI proof. Its telemetry is disabled. The image downloads the stable Linux amd64 release and verifies its SHA-256 before installation; it does not use nightly builds or remote install scripts.
+Lightpanda's telemetry is disabled by default. Its text-only PNG/PDF output is not suitable for visual UI checks; use Chrome for screenshots and video.
 
-For before/after PR evidence, capture screenshots and recordings with `agent-browser` using Chrome, then use GitHub CLI 2.99+ and its native `--attach` support for approved uploads. The optional official public [before-and-after agent skill](https://github.com/vercel-labs/before-and-after) formats existing media and manages a marked block in the PR description. Install it separately if wanted; this starter does not bundle skills or personal workflows. Installing tools or skills grants no credentials or permission to publish.
+A login profile restores the tool path and defaults through `bash -lc`, preserving explicit settings. CI builds the image, checks a clean task-user login shell, and exercises navigation and form interaction with both default Chrome and explicit Lightpanda. The smoke script is mounted into the CI container, not bundled in the image.
 
-To install and audit the tool package locally:
-
-```sh
-cd orb-image
-npm ci --ignore-scripts
-npm audit --omit=dev
-```
-
-A login profile restores the tool path and browser defaults when orb startup runs `bash -lc`, without replacing explicit engine or telemetry settings. Image builds check tool resolution, defaults, and both executable versions through that task-user login shell.
-
-The Orb image CI workflow runs `node --test orb-image/test/profile.test.mjs`, builds the image on Linux, and checks the provider's `setpriv` → clean environment → `bash -lc` startup path. These checks do not launch browsers or prove browser functionality; full browser validation can be run separately.
-
-Update exact npm pins and the lockfile together with `npm install --save-exact --ignore-scripts`; review integrity changes and the audit before redeploying.
+Update npm pins and the lockfile together with lifecycle scripts disabled, and update Lightpanda's version and checksum together. Run `npm audit --omit=dev` in `orb-image/` before redeploying.
 
 ## Update Amp's orb image
 

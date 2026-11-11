@@ -5,9 +5,9 @@ FROM us-central1-docker.pkg.dev/amp-prod-0/amp-orb/amp-orb:latest
 USER root
 WORKDIR /opt/orb-tools
 COPY package.json package-lock.json ./
-# Native agent-browser binaries are included in integrity-checked npm tarballs.
+# Use the bundled, integrity-checked binary, not postinstall's download fallback.
 RUN npm ci --omit=dev --ignore-scripts \
-    && chmod +x node_modules/agent-browser/bin/agent-browser-linux-*
+    && chmod +x node_modules/agent-browser/bin/agent-browser-linux-x64
 ENV PATH="/opt/orb-tools/node_modules/.bin:${PATH}"
 
 # Stable Linux amd64 release; verify before installing, never use nightly builds.
@@ -18,7 +18,7 @@ RUN curl --fail --location --silent --show-error \
     && install -m 0755 /tmp/lightpanda /usr/local/bin/lightpanda \
     && rm /tmp/lightpanda
 ENV LIGHTPANDA_DISABLE_TELEMETRY=true
-ENV AGENT_BROWSER_ENGINE=lightpanda
+ENV AGENT_BROWSER_ENGINE=chrome
 
 COPY profile.sh /etc/profile.d/orb-tools.sh
 
@@ -26,7 +26,7 @@ COPY profile.sh /etc/profile.d/orb-tools.sh
 USER user
 ENV HOME="/home/user"
 RUN bash -lc 'test "$(command -v agent-browser)" = /opt/orb-tools/node_modules/.bin/agent-browser \
-    && test "$AGENT_BROWSER_ENGINE" = lightpanda \
+    && test "$AGENT_BROWSER_ENGINE" = chrome \
     && test "$LIGHTPANDA_DISABLE_TELEMETRY" = true \
     && agent-browser --version \
     && lightpanda version'
