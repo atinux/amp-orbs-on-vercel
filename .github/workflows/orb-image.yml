@@ -1,0 +1,49 @@
+name: Orb image
+
+on:
+  pull_request:
+    paths:
+      - orb-image/**
+      - .github/workflows/orb-image.yml
+  push:
+    branches: [main]
+    paths:
+      - orb-image/**
+      - .github/workflows/orb-image.yml
+  # The base image and its agent-browser change without a commit here.
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  login-shell:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Test the login profile
+        run: node --test orb-image/test/profile.test.mjs
+      - name: Build the Linux image
+        run: docker build --tag orb-browser-tools:ci orb-image
+      - name: Check task-user startup and both browsers
+        run: |
+          docker run --rm --shm-size=1g --user root \
+            --mount "type=bind,src=$PWD/orb-image/test/browser-smoke.mjs,dst=/tmp/browser-smoke.mjs,readonly" \
+            --entrypoint /usr/bin/setpriv orb-browser-tools:ci \
+            --reuid=user --regid=user --init-groups -- \
+            /usr/bin/env -i HOME=/home/user USER=user \
+            PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+            /bin/bash -lc '
+              set -eu
+              test "$(id -un)" = user
+              test "$(command -v agent-browser)" = /usr/local/bin/agent-browser
+              test -z "${AGENT_BROWSER_ENGINE+x}"
+              test "$LIGHTPANDA_DISABLE_TELEMETRY" = true
+              agent-browser --version
+              lightpanda version
+              node /tmp/browser-smoke.mjs
+            '

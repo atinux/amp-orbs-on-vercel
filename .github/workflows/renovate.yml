@@ -1,0 +1,45 @@
+name: Renovate config
+
+on:
+  pull_request:
+    paths:
+      - renovate.json
+      - orb-image/Dockerfile
+      - .github/workflows/renovate.yml
+  push:
+    branches: [main]
+    paths:
+      - renovate.json
+      - orb-image/Dockerfile
+      - .github/workflows/renovate.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    container:
+      image: ghcr.io/renovatebot/renovate:44.222.4
+      options: --user 0
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Validate repository config
+        run: renovate-config-validator --strict --no-global renovate.json
+      - name: Check Lightpanda extraction
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          const config = JSON.parse(readFileSync('renovate.json', 'utf8'));
+          const docker = readFileSync('orb-image/Dockerfile', 'utf8');
+          const manager = config.customManagers.find(m => m.depNameTemplate === 'lightpanda-io/browser');
+          const matches = manager.matchStrings.flatMap(pattern => [...docker.matchAll(new RegExp(pattern, 'g'))]);
+          assert.equal(matches.length, 1, 'Lightpanda must be extracted exactly once');
+          assert.ok(matches[0].groups.currentValue);
+          assert.match(matches[0].groups.currentDigest, /^[a-f0-9]{64}$/);
+          console.log('PASS: Lightpanda version and SHA-256 are extracted together');
+          JS

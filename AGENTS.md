@@ -29,7 +29,7 @@ Read `README.md` first. This file lists constraints and lessons that aren't obvi
 - The Amp CLI needs a glibc base image, such as Debian. It doesn't run on Alpine.
 - Daemon logs aren't available through `vercel logs`. Check them in the dashboard, or write results somewhere you can read, such as sandbox tags.
 
-- On Apple silicon, `docker build --platform linux/amd64` crashes at `amp --version` (`qemu: uncaught target signal 6`), because Amp's Bun binary doesn't run under QEMU. Test the provider image with `--platform linux/arm64`; Vercel builds daemons on real amd64 machines.
+- On Apple silicon, `docker build --platform linux/amd64` crashes at `amp --version` (`qemu: uncaught target signal 6`), because Amp's Bun binary doesn't run under QEMU. Test the provider image with `--platform linux/arm64`; Vercel builds daemons on real amd64 machines. The separate orb image installs the Linux amd64 Lightpanda binary and must be tested on native amd64, as in CI.
 
 ## Verification
 

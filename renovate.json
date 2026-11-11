@@ -1,0 +1,49 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "schedule:weekly",
+    ":maintainLockFilesWeekly",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "automerge": false,
+  "rangeStrategy": "pin",
+  "minimumReleaseAge": "3 days",
+  "enabledManagers": ["npm", "github-actions", "dockerfile", "custom.regex"],
+  "packageRules": [
+    {
+      "matchFileNames": ["provider/**"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "provider dependencies"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "matchDatasources": ["npm"],
+      "matchPackageNames": ["@ampcode/cli"],
+      "versioning": "npm",
+      "ignoreUnstable": false,
+      "respectLatest": true,
+      "internalChecksFilter": "strict",
+      "minimumReleaseAgeBehaviour": "timestamp-required"
+    },
+    {
+      "matchPackageNames": ["us-central1-docker.pkg.dev/amp-prod-0/amp-orb/amp-orb"],
+      "enabled": false
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^orb-image/Dockerfile$/"],
+      "matchStrings": [
+        "https://github\\.com/lightpanda-io/browser/releases/download/(?<currentValue>[^/\\s]+)/lightpanda-x86_64-linux[\\s\\S]*?echo '(?<currentDigest>[a-f0-9]{64})  /tmp/lightpanda'"
+      ],
+      "datasourceTemplate": "github-release-attachments",
+      "depNameTemplate": "lightpanda-io/browser",
+      "versioningTemplate": "semver"
+    }
+  ]
+}

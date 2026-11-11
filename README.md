@@ -92,6 +92,24 @@ The provider daemon can obtain the project's OIDC tokens, so its image only runs
 - The Docker build runs `npm ci --ignore-scripts`, so no package script runs until npm has verified every package. Amp's setup script then places the binary, and `amp --version` fails the build if the binary is missing.
 - `AMP_SKIP_UPDATE_CHECK=1` stops the CLI from updating itself at runtime.
 
+## Orb tools
+
+The Linux amd64 orb image adds checksum-verified [Lightpanda 1.0.3](https://github.com/lightpanda-io/browser/releases/tag/1.0.3) and uses the `agent-browser` already bundled in Amp's base image, without reinstalling or shadowing it. No personal skills, instructions, or plugins are bundled, and the provider image is unchanged.
+
+Chrome remains the default. Lightpanda is opt-in for nonvisual DOM work:
+
+```sh
+agent-browser --engine lightpanda --session research open http://localhost:3000
+agent-browser --engine lightpanda --session research snapshot
+agent-browser --engine lightpanda --session research close
+```
+
+Lightpanda's telemetry is disabled by default. Its text-only PNG/PDF output is not suitable for visual UI checks; use Chrome for screenshots and video.
+
+A one-line login profile supplies the telemetry default through `bash -lc`, preserving explicit settings without changing `PATH` or the browser engine. CI builds the image, checks a clean task-user login shell, and exercises navigation and form interaction with both default Chrome and explicit Lightpanda using `/usr/local/bin/agent-browser`. It also runs weekly, because Amp's base image changes without a commit here. The smoke script is mounted into the CI container, not bundled in the image.
+
+Update Lightpanda's version and checksum together. Browser CLI updates come from Amp's base image when the orb image is rebuilt.
+
 ## Update Amp's orb image
 
 Each production deployment rebuilds `daemon.orb-image` from Amp's latest image. New orbs use the newest build; existing orbs keep the image they started from. To pick up a new Amp image, redeploy:
@@ -111,6 +129,14 @@ npm audit --omit=dev
 ```
 
 Review the version and `integrity` changes in `package-lock.json`, commit `package.json` and `package-lock.json` together, and redeploy. Never regenerate the lockfile during the Docker build, and never replace an integrity hash to get past a mismatch; investigate it instead.
+
+## Dependency updates
+
+Enable the Renovate GitHub App for this repository. `renovate.json` uses explicit built-in presets for recommended settings, weekly updates, and weekly lockfile maintenance, with exact pins, a three-day release delay, and automerge disabled. Amp CLI updates allow its timestamped prerelease versions while retaining the release-age delay and npm's `latest` ceiling. Amp's `amp-orb:latest` base is intentionally excluded from pinning and updates.
+
+Provider changes run dependency installation with lifecycle scripts disabled, a syntax check, an audit, a Linux image build, and a credential-free SDK import check in CI. Renovate config changes are validated separately, including mandatory Lightpanda extraction. Review lockfile integrity changes before merging, then redeploy; existing orbs keep their snapshots.
+
+The custom manager for `orb-image/Dockerfile` tracks Lightpanda's release version and SHA-256 together. Keep the checksum-verifying image build and browser smoke checks passing before merging an update. Renovate computes the proposed digest from the release assets; it does not independently authenticate the publisher, and a failed asset match can leave a stale checksum that must not be bypassed.
 
 ## Costs
 
