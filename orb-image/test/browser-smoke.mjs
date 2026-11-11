@@ -13,7 +13,7 @@ const server = createServer((_request, response) => {
 	response.end(page);
 });
 
-assert.equal(process.env.AGENT_BROWSER_ENGINE, 'chrome');
+assert.equal(process.env.AGENT_BROWSER_ENGINE, undefined, 'Exercise the CLI default without an engine override');
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const url = `http://127.0.0.1:${server.address().port}`;
 

@@ -24,9 +24,6 @@ jobs:
           persist-credentials: false
       - name: Test the login profile
         run: node --test orb-image/test/profile.test.mjs
-      - name: Audit browser dependencies
-        working-directory: orb-image
-        run: npm audit --omit=dev
       - name: Build the Linux image
         run: docker build --tag orb-browser-tools:ci orb-image
       - name: Check task-user startup and both browsers
@@ -40,18 +37,10 @@ jobs:
             /bin/bash -lc '
               set -eu
               test "$(id -un)" = user
-              test "$(command -v agent-browser)" = /opt/orb-tools/node_modules/.bin/agent-browser
-              test "$AGENT_BROWSER_ENGINE" = chrome
-              test "$LIGHTPANDA_DISABLE_TELEMETRY" = true
-              expected=$(node -p "require(\"/opt/orb-tools/package.json\").dependencies[\"agent-browser\"]")
-              actual=$(agent-browser --version)
-              printf "%s\n" "$actual"
-              test "$actual" = "agent-browser $expected"
-              lightpanda version
-              node /tmp/browser-smoke.mjs
-              export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
               test "$(command -v agent-browser)" = /usr/local/bin/agent-browser
-              printf "BUNDLED_BROWSER "
+              test -z "${AGENT_BROWSER_ENGINE+x}"
+              test "$LIGHTPANDA_DISABLE_TELEMETRY" = true
               agent-browser --version
+              lightpanda version
               node /tmp/browser-smoke.mjs
             '

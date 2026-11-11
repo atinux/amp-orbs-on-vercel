@@ -32,11 +32,6 @@
     {
       "matchPackageNames": ["us-central1-docker.pkg.dev/amp-prod-0/amp-orb/amp-orb"],
       "enabled": false
-    },
-    {
-      "matchDatasources": ["github-release-attachments"],
-      "matchPackageNames": ["lightpanda-io/browser"],
-      "groupName": null
     }
   ],
   "customManagers": [

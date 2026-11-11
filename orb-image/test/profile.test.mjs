@@ -8,7 +8,7 @@ const profile = fileURLToPath(new URL('../profile.sh', import.meta.url));
 function loadProfile(overrides = {}) {
 	const result = spawnSync('/bin/bash', [
 		'--noprofile', '--norc', '-c',
-		'set -e; . "$1"; printf "%s\\n" "$PATH" "$AGENT_BROWSER_ENGINE" "$LIGHTPANDA_DISABLE_TELEMETRY"',
+		'set -e; . "$1"; printf "%s\\n" "$PATH" "${AGENT_BROWSER_ENGINE-unset}" "$LIGHTPANDA_DISABLE_TELEMETRY"',
 		'orb-profile-test', profile,
 	], {
 		encoding: 'utf8',
@@ -18,33 +18,22 @@ function loadProfile(overrides = {}) {
 	return result.stdout.trimEnd().split('\n');
 }
 
-test('restores the tool path and Chrome default in a clean environment', () => {
-	assert.deepEqual(loadProfile(), [
-		'/opt/orb-tools/node_modules/.bin:/usr/bin:/bin',
-		'chrome',
-		'true',
-	]);
+test('disables telemetry without changing the path or setting an engine', () => {
+	assert.deepEqual(loadProfile(), ['/usr/bin:/bin', 'unset', 'true']);
 });
 
-test('preserves explicit engine and telemetry settings', () => {
+test('preserves explicit telemetry and engine settings', () => {
 	assert.deepEqual(loadProfile({
 		AGENT_BROWSER_ENGINE: 'lightpanda',
 		LIGHTPANDA_DISABLE_TELEMETRY: 'false',
-	}), [
-		'/opt/orb-tools/node_modules/.bin:/usr/bin:/bin',
-		'lightpanda',
-		'false',
-	]);
+	}), ['/usr/bin:/bin', 'lightpanda', 'false']);
 });
 
-test('uses defaults for empty settings', () => {
-	assert.deepEqual(loadProfile({
-		AGENT_BROWSER_ENGINE: '',
-		LIGHTPANDA_DISABLE_TELEMETRY: '',
-	}), loadProfile());
+test('disables telemetry when its setting is empty', () => {
+	assert.deepEqual(loadProfile({ LIGHTPANDA_DISABLE_TELEMETRY: '' }), loadProfile());
 });
 
-test('preserves the rest of the task environment path', () => {
+test('preserves a custom path', () => {
 	assert.equal(loadProfile({ PATH: '/custom/bin:/usr/bin:/bin' })[0],
-		'/opt/orb-tools/node_modules/.bin:/custom/bin:/usr/bin:/bin');
+		'/custom/bin:/usr/bin:/bin');
 });

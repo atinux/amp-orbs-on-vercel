@@ -94,7 +94,7 @@ The provider daemon can obtain the project's OIDC tokens, so its image only runs
 
 ## Orb tools
 
-The Linux amd64 orb image adds pinned `agent-browser@0.41.2` and checksum-verified [Lightpanda 1.0.3](https://github.com/lightpanda-io/browser/releases/tag/1.0.3) to Amp's base image. The newer browser CLI is installed separately under `/opt/orb-tools`; the base copy is not modified. No personal skills, instructions, or plugins are bundled, and the provider image is unchanged.
+The Linux amd64 orb image adds checksum-verified [Lightpanda 1.0.3](https://github.com/lightpanda-io/browser/releases/tag/1.0.3) and uses the `agent-browser` already bundled in Amp's base image, without reinstalling or shadowing it. No personal skills, instructions, or plugins are bundled, and the provider image is unchanged.
 
 Chrome remains the default. Lightpanda is opt-in for nonvisual DOM work:
 
@@ -106,9 +106,9 @@ agent-browser --engine lightpanda --session research close
 
 Lightpanda's telemetry is disabled by default. Its text-only PNG/PDF output is not suitable for visual UI checks; use Chrome for screenshots and video.
 
-A login profile restores the tool path and defaults through `bash -lc`, preserving explicit settings. CI builds the image, checks a clean task-user login shell, and exercises navigation and form interaction with both default Chrome and explicit Lightpanda. The smoke script is mounted into the CI container, not bundled in the image.
+A one-line login profile supplies the telemetry default through `bash -lc`, preserving explicit settings without changing `PATH` or the browser engine. CI builds the image, checks a clean task-user login shell, and exercises navigation and form interaction with both default Chrome and explicit Lightpanda using `/usr/local/bin/agent-browser`. The smoke script is mounted into the CI container, not bundled in the image.
 
-Update npm pins and the lockfile together with lifecycle scripts disabled, and update Lightpanda's version and checksum together. Run `npm audit --omit=dev` in `orb-image/` before redeploying.
+Update Lightpanda's version and checksum together. Browser CLI updates come from Amp's base image when the orb image is rebuilt.
 
 ## Update Amp's orb image
 
